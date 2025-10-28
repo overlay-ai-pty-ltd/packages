@@ -1,18 +1,17 @@
-// Copyright 2013 The Flutter Authors
+// Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import 'package:pigeon/pigeon.dart';
 
-@ConfigurePigeon(
-  PigeonOptions(
-    dartOut: 'lib/src/messages.g.dart',
-    cppOptions: CppOptions(namespace: 'camera_windows'),
-    cppHeaderOut: 'windows/messages.g.h',
-    cppSourceOut: 'windows/messages.g.cpp',
-    copyrightHeader: 'pigeons/copyright.txt',
-  ),
-)
+@ConfigurePigeon(PigeonOptions(
+  dartOut: 'lib/src/messages.g.dart',
+  cppOptions: CppOptions(namespace: 'camera_windows'),
+  cppHeaderOut: 'windows/messages.g.h',
+  cppSourceOut: 'windows/messages.g.cpp',
+  copyrightHeader: 'pigeons/copyright.txt',
+))
+
 /// Pigeon version of platform interface's ResolutionPreset.
 enum PlatformResolutionPreset { low, medium, high, veryHigh, ultraHigh, max }
 
@@ -70,6 +69,11 @@ abstract class CameraApi {
   /// the resulting file.
   @async
   String stopVideoRecording(int cameraId);
+
+  /// Starts the image stream for the given camera.
+  /// Returns the name of the [EventChannel] used to deliver the images.
+  /// Cancelling the subscription to the channel stops the capture.
+  String startImageStream(int cameraId);
 
   /// Starts the preview stream for the given camera.
   @async

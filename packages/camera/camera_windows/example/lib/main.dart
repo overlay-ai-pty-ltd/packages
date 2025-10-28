@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors
+// Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -30,6 +30,7 @@ class _MyAppState extends State<MyApp> {
   bool _recording = false;
   bool _recordingTimed = false;
   bool _previewPaused = false;
+  bool _isStreamingImages = false;
   Size? _previewSize;
   MediaSettings _mediaSettings = const MediaSettings(
     resolutionPreset: ResolutionPreset.low,
@@ -40,6 +41,7 @@ class _MyAppState extends State<MyApp> {
   );
   StreamSubscription<CameraErrorEvent>? _errorStreamSubscription;
   StreamSubscription<CameraClosingEvent>? _cameraClosingStreamSubscription;
+  StreamSubscription<CameraImageData>? _imageStreamSubscription;
 
   @override
   void initState() {
@@ -55,6 +57,8 @@ class _MyAppState extends State<MyApp> {
     _errorStreamSubscription = null;
     _cameraClosingStreamSubscription?.cancel();
     _cameraClosingStreamSubscription = null;
+    _imageStreamSubscription?.cancel();
+    _imageStreamSubscription = null;
     super.dispose();
   }
 
@@ -167,6 +171,7 @@ class _MyAppState extends State<MyApp> {
             _recording = false;
             _recordingTimed = false;
             _previewPaused = false;
+            _isStreamingImages = false;
             _cameraInfo = 'Camera disposed';
           });
         }
@@ -257,6 +262,30 @@ class _MyAppState extends State<MyApp> {
         });
       }
     }
+  }
+
+  Future<void> _toggleImageStream() async {
+    if (_initialized && _cameraId >= 0) {
+      if (!_isStreamingImages) {
+        _imageStreamSubscription = CameraPlatform.instance
+            .onStreamedFrameAvailable(_cameraId)
+            .listen(_onFrameAvailable);
+      } else {
+        await _imageStreamSubscription?.cancel();
+        _imageStreamSubscription = null;
+      }
+      if (mounted) {
+        setState(() {
+          _isStreamingImages = !_isStreamingImages;
+        });
+      }
+    }
+  }
+
+  void _onFrameAvailable(CameraImageData image) {
+    debugPrint(
+      'Frame available! ${image.width}x${image.height} ${image.format}',
+    );
   }
 
   Future<void> _switchCamera() async {
@@ -420,6 +449,15 @@ class _MyAppState extends State<MyApp> {
                             ? () => _recordTimed(5)
                             : null,
                     child: const Text('Record 5 seconds'),
+                  ),
+                  const SizedBox(width: 5),
+                  ElevatedButton(
+                    onPressed: _initialized ? _toggleImageStream : null,
+                    child: Text(
+                      _isStreamingImages
+                          ? 'Stop image streaming'
+                          : 'Start image streaming',
+                    ),
                   ),
                   if (_cameras.length > 1) ...<Widget>[
                     const SizedBox(width: 5),

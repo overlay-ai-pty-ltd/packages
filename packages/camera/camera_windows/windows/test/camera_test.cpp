@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors
+// Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -52,10 +52,11 @@ TEST(Camera, InitCameraCreatesCaptureController) {
   PlatformMediaSettings media_settings(PlatformResolutionPreset::kMax, false);
 
   // Init camera with mock capture controller factory
-  bool result = camera->InitCamera(
-      std::move(capture_controller_factory),
-      std::make_unique<MockTextureRegistrar>().get(),
-      std::make_unique<MockBinaryMessenger>().get(), media_settings);
+  bool result =
+      camera->InitCamera(std::move(capture_controller_factory),
+                         std::make_unique<MockTextureRegistrar>().get(),
+                         std::make_unique<MockBinaryMessenger>().get(),
+                         media_settings, std::make_shared<MockTaskRunner>());
   EXPECT_TRUE(result);
   EXPECT_TRUE(camera->GetCaptureController() != nullptr);
 }
@@ -84,10 +85,11 @@ TEST(Camera, InitCameraReportsFailure) {
   PlatformMediaSettings media_settings(PlatformResolutionPreset::kMax, false);
 
   // Init camera with mock capture controller factory
-  bool result = camera->InitCamera(
-      std::move(capture_controller_factory),
-      std::make_unique<MockTextureRegistrar>().get(),
-      std::make_unique<MockBinaryMessenger>().get(), media_settings);
+  bool result =
+      camera->InitCamera(std::move(capture_controller_factory),
+                         std::make_unique<MockTextureRegistrar>().get(),
+                         std::make_unique<MockBinaryMessenger>().get(),
+                         media_settings, std::make_shared<MockTaskRunner>());
   EXPECT_FALSE(result);
   EXPECT_TRUE(camera->GetCaptureController() != nullptr);
 }
