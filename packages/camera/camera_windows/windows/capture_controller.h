@@ -7,6 +7,7 @@
 
 #include <d3d11.h>
 #include <flutter/texture_registrar.h>
+#include <flutter/event_channel.h>
 #include <mfapi.h>
 #include <mfcaptureengine.h>
 #include <mferror.h>
@@ -94,6 +95,13 @@ class CaptureController {
 
   // Captures a still photo.
   virtual void TakePicture(const std::string& file_path) = 0;
+
+  // Starts the image stream.
+  virtual void StartImageStream(
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink) = 0;
+
+  // Stops the image stream.
+  virtual void StopImageStream() = 0;
 };
 
 // Concrete implementation of the |CaptureController| interface.
@@ -126,6 +134,10 @@ class CaptureControllerImpl : public CaptureController,
   void StartRecord(const std::string& file_path) override;
   void StopRecord() override;
   void TakePicture(const std::string& file_path) override;
+  void StartImageStream(
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink)
+      override;
+  void StopImageStream() override;
 
   // CaptureEngineObserver
   void OnEvent(IMFMediaEvent* event) override;
@@ -235,6 +247,7 @@ class CaptureControllerImpl : public CaptureController,
   ComPtr<IMFMediaSource> audio_source_;
 
   TextureRegistrar* texture_registrar_ = nullptr;
+  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> stream_sink_;
 };
 
 // Inferface for factory classes that create |CaptureController| instances.

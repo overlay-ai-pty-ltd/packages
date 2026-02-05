@@ -59,6 +59,15 @@ bool CameraImpl::InitCamera(
                                                 media_settings);
 }
 
+void CameraImpl::StartImageStream(
+    std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink) {
+  capture_controller_->StartImageStream(std::move(sink));
+}
+
+void CameraImpl::StopImageStream() {
+  capture_controller_->StopImageStream();
+}
+
 bool CameraImpl::AddPendingVoidResult(
     PendingResultType type,
     std::function<void(std::optional<FlutterError> reply)> result) {
@@ -290,6 +299,42 @@ void CameraImpl::OnStopRecordFailed(CameraResult result,
     pending_result(FlutterError(error_code, error));
   }
 };
+
+void CameraImpl::OnStartImageStreamSucceeded() {
+  auto pending_result =
+      GetPendingVoidResultByType(PendingResultType::kStartImageStream);
+  if (pending_result) {
+    pending_result(std::nullopt);
+  }
+}
+
+void CameraImpl::OnStartImageStreamFailed(CameraResult result,
+                                          const std::string& error) {
+  auto pending_result =
+      GetPendingVoidResultByType(PendingResultType::kStartImageStream);
+  if (pending_result) {
+    std::string error_code = GetErrorCode(result);
+    pending_result(FlutterError(error_code, error));
+  }
+}
+
+void CameraImpl::OnStopImageStreamSucceeded() {
+  auto pending_result =
+      GetPendingVoidResultByType(PendingResultType::kStopImageStream);
+  if (pending_result) {
+    pending_result(std::nullopt);
+  }
+}
+
+void CameraImpl::OnStopImageStreamFailed(CameraResult result,
+                                         const std::string& error) {
+  auto pending_result =
+      GetPendingVoidResultByType(PendingResultType::kStopImageStream);
+  if (pending_result) {
+    std::string error_code = GetErrorCode(result);
+    pending_result(FlutterError(error_code, error));
+  }
+}
 
 void CameraImpl::OnTakePictureSucceeded(const std::string& file_path) {
   auto pending_result =

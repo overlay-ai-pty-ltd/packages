@@ -24,6 +24,8 @@ enum class PendingResultType {
   kStopRecord,
   kPausePreview,
   kResumePreview,
+  kStartImageStream,
+  kStopImageStream,
 };
 
 // Interface implemented by cameras.
@@ -86,6 +88,13 @@ class Camera : public CaptureControllerListener {
   virtual bool InitCamera(flutter::TextureRegistrar* texture_registrar,
                           flutter::BinaryMessenger* messenger,
                           const PlatformMediaSettings& media_settings) = 0;
+
+  // Starts the image stream.
+  virtual void StartImageStream(
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink) = 0;
+
+  // Stops the image stream.
+  virtual void StopImageStream() = 0;
 };
 
 // Concrete implementation of the |Camera| interface.
@@ -121,6 +130,12 @@ class CameraImpl : public Camera {
   void OnStopRecordSucceeded(const std::string& file_path) override;
   void OnStopRecordFailed(CameraResult result,
                           const std::string& error) override;
+  void OnStartImageStreamSucceeded() override;
+  void OnStartImageStreamFailed(CameraResult result,
+                                const std::string& error) override;
+  void OnStopImageStreamSucceeded() override;
+  void OnStopImageStreamFailed(CameraResult result,
+                               const std::string& error) override;
   void OnTakePictureSucceeded(const std::string& file_path) override;
   void OnTakePictureFailed(CameraResult result,
                            const std::string& error) override;
@@ -152,6 +167,11 @@ class CameraImpl : public Camera {
   bool InitCamera(flutter::TextureRegistrar* texture_registrar,
                   flutter::BinaryMessenger* messenger,
                   const PlatformMediaSettings& media_settings) override;
+
+  void StartImageStream(
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink)
+      override;
+  void StopImageStream() override;
 
   // Initializes the camera and its associated capture controller.
   //

@@ -94,6 +94,26 @@ class CaptureControllerListener {
   virtual void OnStopRecordFailed(CameraResult result,
                                   const std::string& error) = 0;
 
+  // Called by CaptureController on successfully started image stream.
+  virtual void OnStartImageStreamSucceeded() = 0;
+
+  // Called by CaptureController if starting the image stream fails.
+  //
+  // result: The kind of result.
+  // error: A string describing the error.
+  virtual void OnStartImageStreamFailed(CameraResult result,
+                                        const std::string& error) = 0;
+
+  // Called by CaptureController on successfully stopped image stream.
+  virtual void OnStopImageStreamSucceeded() = 0;
+
+  // Called by CaptureController if stopping the image stream fails.
+  //
+  // result: The kind of result.
+  // error: A string describing the error.
+  virtual void OnStopImageStreamFailed(CameraResult result,
+                                       const std::string& error) = 0;
+
   // Called by CaptureController on successfully captured picture.
   //
   // file_path: Filesystem path of the captured image.

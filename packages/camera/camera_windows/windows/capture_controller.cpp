@@ -860,10 +860,50 @@ void CaptureControllerImpl::OnRecordStopped(CameraResult result,
 // Implements CaptureEngineObserver::UpdateBuffer.
 bool CaptureControllerImpl::UpdateBuffer(uint8_t* buffer,
                                          uint32_t data_length) {
+  if (stream_sink_) {
+    flutter::EncodableMap map;
+    map[flutter::EncodableValue("width")] =
+        flutter::EncodableValue((int64_t)preview_frame_width_);
+    map[flutter::EncodableValue("height")] =
+        flutter::EncodableValue((int64_t)preview_frame_height_);
+    map[flutter::EncodableValue("format")] =
+        flutter::EncodableValue((int64_t)0);  // unknown
+
+    std::vector<uint8_t> bytes(buffer, buffer + data_length);
+    flutter::EncodableMap plane;
+    plane[flutter::EncodableValue("bytes")] = flutter::EncodableValue(bytes);
+    plane[flutter::EncodableValue("bytesPerRow")] = flutter::EncodableValue(
+        (int64_t)(preview_frame_height_ > 0 ? data_length / preview_frame_height_
+                                            : 0));
+    plane[flutter::EncodableValue("bytesPerPixel")] =
+        flutter::EncodableValue((int64_t)0);
+
+    flutter::EncodableList planes;
+    planes.push_back(flutter::EncodableValue(plane));
+    map[flutter::EncodableValue("planes")] = flutter::EncodableValue(planes);
+
+    stream_sink_->Success(flutter::EncodableValue(map));
+  }
+
   if (!texture_handler_) {
     return false;
   }
   return texture_handler_->UpdateBuffer(buffer, data_length);
+}
+
+void CaptureControllerImpl::StartImageStream(
+    std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink) {
+  stream_sink_ = std::move(sink);
+  if (capture_controller_listener_) {
+    capture_controller_listener_->OnStartImageStreamSucceeded();
+  }
+}
+
+void CaptureControllerImpl::StopImageStream() {
+  stream_sink_ = nullptr;
+  if (capture_controller_listener_) {
+    capture_controller_listener_->OnStopImageStreamSucceeded();
+  }
 }
 
 // Handles capture time update from each processed frame.

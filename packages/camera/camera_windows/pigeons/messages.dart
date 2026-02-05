@@ -78,6 +78,14 @@ abstract class CameraApi {
   /// Resumes the preview stream for the given camera.
   @async
   void resumePreview(int cameraId);
+
+  /// Starts streaming frames from the given camera.
+  @async
+  void startImageStream(int cameraId);
+
+  /// Stops streaming frames from the given camera.
+  @async
+  void stopImageStream(int cameraId);
 }
 
 @FlutterApi()

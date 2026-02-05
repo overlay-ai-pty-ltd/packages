@@ -6,6 +6,7 @@
 #define PACKAGES_CAMERA_CAMERA_WINDOWS_WINDOWS_CAMERA_PLUGIN_H_
 
 #include <flutter/flutter_view.h>
+#include <flutter/event_channel.h>
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
@@ -73,7 +74,28 @@ class CameraPlugin : public flutter::Plugin,
       std::function<void(ErrorOr<std::string> reply)> result) override;
   std::optional<FlutterError> Dispose(int64_t camera_id) override;
 
+  void StartImageStream(
+      int64_t camera_id,
+      std::function<void(std::optional<FlutterError> reply)> result) override;
+  void StopImageStream(
+      int64_t camera_id,
+      std::function<void(std::optional<FlutterError> reply)> result) override;
+
+  // Callbacks for image stream handler.
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>>
+  OnStreamListen(
+      const flutter::EncodableValue* arguments,
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events);
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>>
+  OnStreamCancel(const flutter::EncodableValue* arguments);
+
  private:
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
+      method_channel_;
+  std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>>
+      image_stream_channel_;
+  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> stream_sink_;
+
   // Loops through cameras and returns camera
   // with matching device_id or nullptr.
   Camera* GetCameraByDeviceId(std::string& device_id);

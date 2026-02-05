@@ -171,6 +171,17 @@ class MockCamera : public Camera {
               (override));
   MOCK_METHOD(void, OnTakePictureFailed,
               (CameraResult result, const std::string& error), (override));
+  MOCK_METHOD(
+      void, StartImageStream,
+      (std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink),
+      (override));
+  MOCK_METHOD(void, StopImageStream, (), (override));
+  MOCK_METHOD(void, OnStartImageStreamSucceeded, (), (override));
+  MOCK_METHOD(void, OnStartImageStreamFailed,
+              (CameraResult result, const std::string& error), (override));
+  MOCK_METHOD(void, OnStopImageStreamSucceeded, (), (override));
+  MOCK_METHOD(void, OnStopImageStreamFailed,
+              (CameraResult result, const std::string& error), (override));
 
   MOCK_METHOD(void, OnCaptureError,
               (CameraResult result, const std::string& error), (override));
@@ -249,6 +260,11 @@ class MockCaptureController : public CaptureController {
   MOCK_METHOD(void, StartRecord, (const std::string& file_path), (override));
   MOCK_METHOD(void, StopRecord, (), (override));
   MOCK_METHOD(void, TakePicture, (const std::string& file_path), (override));
+  MOCK_METHOD(
+      void, StartImageStream,
+      (std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> sink),
+      (override));
+  MOCK_METHOD(void, StopImageStream, (), (override));
 };
 
 // MockCameraPlugin extends CameraPlugin behaviour a bit to allow adding cameras

@@ -29,6 +29,8 @@ class _MyAppState extends State<MyApp> {
   bool _initialized = false;
   bool _recording = false;
   bool _previewPaused = false;
+  bool _streaming = false;
+  StreamSubscription<CameraImageData>? _imageStreamSubscription;
   Size? _previewSize;
   MediaSettings _mediaSettings = const MediaSettings(
     resolutionPreset: ResolutionPreset.low,
@@ -54,6 +56,8 @@ class _MyAppState extends State<MyApp> {
     _errorStreamSubscription = null;
     _cameraClosingStreamSubscription?.cancel();
     _cameraClosingStreamSubscription = null;
+    _imageStreamSubscription?.cancel();
+    _imageStreamSubscription = null;
     super.dispose();
   }
 
@@ -223,6 +227,26 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  Future<void> _toggleStream() async {
+    if (_initialized && _cameraId >= 0) {
+      if (!_streaming) {
+        _imageStreamSubscription = CameraPlatform.instance
+            .onStreamedFrameAvailable(_cameraId)
+            .listen((CameraImageData image) {
+          debugPrint('Frame received: ${image.width}x${image.height}');
+        });
+      } else {
+        await _imageStreamSubscription?.cancel();
+        _imageStreamSubscription = null;
+      }
+      if (mounted) {
+        setState(() {
+          _streaming = !_streaming;
+        });
+      }
+    }
+  }
+
   Future<void> _switchCamera() async {
     if (_cameras.isNotEmpty) {
       // select next index;
@@ -371,6 +395,11 @@ class _MyAppState extends State<MyApp> {
                   ElevatedButton(
                     onPressed: _initialized ? _toggleRecord : null,
                     child: Text(_recording ? 'Stop recording' : 'Record Video'),
+                  ),
+                  const SizedBox(width: 5),
+                  ElevatedButton(
+                    onPressed: _initialized ? _toggleStream : null,
+                    child: Text(_streaming ? 'Stop stream' : 'Start stream'),
                   ),
                   if (_cameras.length > 1) ...<Widget>[
                     const SizedBox(width: 5),

@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/services.dart';
@@ -337,6 +338,73 @@ class CameraWindows extends CameraPlatform {
     return Texture(textureId: cameraId);
   }
 
+  /// The stream to receive frames from the native code.
+  StreamSubscription<dynamic>? _platformImageStreamSubscription;
+
+  /// The stream for vending frames to platform interface clients.
+  StreamController<CameraImageData>? _frameStreamController;
+
+  @override
+  Stream<CameraImageData> onStreamedFrameAvailable(
+    int cameraId, {
+    CameraImageStreamOptions? options,
+  }) {
+    _installStreamController(
+      onListen: () => _onFrameStreamListen(cameraId),
+      onCancel: () => _onFrameStreamCancel(cameraId),
+    );
+    return _frameStreamController!.stream;
+  }
+
+  StreamController<CameraImageData> _installStreamController({
+    void Function()? onListen,
+    void Function()? onCancel,
+  }) {
+    _frameStreamController = StreamController<CameraImageData>(
+      onListen: onListen ?? () {},
+      onPause: _onFrameStreamPauseResume,
+      onResume: _onFrameStreamPauseResume,
+      onCancel: onCancel ?? () {},
+    );
+    return _frameStreamController!;
+  }
+
+  void _onFrameStreamListen(int cameraId) {
+    _startPlatformStream(cameraId);
+  }
+
+  Future<void> _startPlatformStream(int cameraId) async {
+    _startStreamListener(cameraId);
+    await _hostApi.startImageStream(cameraId);
+  }
+
+  void _startStreamListener(int cameraId) {
+    const EventChannel cameraEventChannel = EventChannel(
+      'plugins.flutter.io/camera_windows/imageStream',
+    );
+    _platformImageStreamSubscription = cameraEventChannel
+        .receiveBroadcastStream()
+        .listen((dynamic imageData) {
+          _frameStreamController!.add(
+            cameraImageFromPlatformData(imageData as Map<dynamic, dynamic>),
+          );
+        });
+  }
+
+  FutureOr<void> _onFrameStreamCancel(int cameraId) async {
+    await _hostApi.stopImageStream(cameraId);
+    await _platformImageStreamSubscription?.cancel();
+    _platformImageStreamSubscription = null;
+    _frameStreamController = null;
+  }
+
+  void _onFrameStreamPauseResume() {
+    throw CameraException(
+      'InvalidCall',
+      'Pause and resume are not supported for onStreamedFrameAvailable',
+    );
+  }
+
   /// Returns a [MediaSettings]'s Pigeon representation.
   PlatformMediaSettings _pigeonMediaSettings(MediaSettings? settings) {
     return PlatformMediaSettings(
@@ -411,4 +479,51 @@ class HostCameraMessageHandler implements CameraEventApi {
   void cameraClosing() {
     streamController.add(CameraClosingEvent(cameraId));
   }
+}
+
+/// Converts method channel call [data] for `receivedImageStreamData` to a
+/// [CameraImageData].
+CameraImageData cameraImageFromPlatformData(Map<dynamic, dynamic> data) {
+  return CameraImageData(
+    format: _cameraImageFormatFromPlatformData(data['format']),
+    height: data['height'] as int,
+    width: data['width'] as int,
+    lensAperture: data['lensAperture'] as double?,
+    sensorExposureTime: data['sensorExposureTime'] as int?,
+    sensorSensitivity: data['sensorSensitivity'] as double?,
+    planes: List<CameraImagePlane>.unmodifiable(
+      (data['planes'] as List<dynamic>).map<CameraImagePlane>(
+        (dynamic planeData) => _cameraImagePlaneFromPlatformData(
+          planeData as Map<dynamic, dynamic>,
+        ),
+      ),
+    ),
+  );
+}
+
+CameraImageFormat _cameraImageFormatFromPlatformData(dynamic data) {
+  return CameraImageFormat(_imageFormatGroupFromPlatformData(data), raw: data);
+}
+
+ImageFormatGroup _imageFormatGroupFromPlatformData(dynamic data) {
+  switch (data) {
+    case 35: // android.graphics.ImageFormat.YUV_420_888
+      return ImageFormatGroup.yuv420;
+    case 256: // android.graphics.ImageFormat.JPEG
+      return ImageFormatGroup.jpeg;
+    case 17: // android.graphics.ImageFormat.NV21
+      return ImageFormatGroup.nv21;
+  }
+
+  return ImageFormatGroup.unknown;
+}
+
+CameraImagePlane _cameraImagePlaneFromPlatformData(Map<dynamic, dynamic> data) {
+  return CameraImagePlane(
+    bytes: data['bytes'] as Uint8List,
+    bytesPerPixel: data['bytesPerPixel'] as int?,
+    bytesPerRow: data['bytesPerRow'] as int,
+    height: data['height'] as int?,
+    width: data['width'] as int?,
+  );
 }
