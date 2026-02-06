@@ -337,6 +337,10 @@ class CameraWindows extends CameraPlatform {
   Widget buildPreview(int cameraId) {
     return Texture(textureId: cameraId);
   }
+  @override
+  Future<bool> supportsImageStream(int cameraId) async {
+    return true;
+  }
 
   /// The stream to receive frames from the native code.
   StreamSubscription<dynamic>? _platformImageStreamSubscription;
