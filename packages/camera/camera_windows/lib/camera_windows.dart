@@ -517,6 +517,8 @@ ImageFormatGroup _imageFormatGroupFromPlatformData(dynamic data) {
       return ImageFormatGroup.jpeg;
     case 17: // android.graphics.ImageFormat.NV21
       return ImageFormatGroup.nv21;
+    case 1111970369: // kCVPixelFormatType_32BGRA
+      return ImageFormatGroup.bgra8888;
   }
 
   return ImageFormatGroup.unknown;

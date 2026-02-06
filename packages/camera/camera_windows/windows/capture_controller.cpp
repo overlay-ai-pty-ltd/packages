@@ -867,7 +867,7 @@ bool CaptureControllerImpl::UpdateBuffer(uint8_t* buffer,
     map[flutter::EncodableValue("height")] =
         flutter::EncodableValue((int64_t)preview_frame_height_);
     map[flutter::EncodableValue("format")] =
-        flutter::EncodableValue((int64_t)0);  // unknown
+        flutter::EncodableValue((int64_t)1111970369);  // kCVPixelFormatType_32BGRA
 
     std::vector<uint8_t> bytes(buffer, buffer + data_length);
     flutter::EncodableMap plane;
