@@ -338,9 +338,7 @@ class CameraWindows extends CameraPlatform {
     return Texture(textureId: cameraId);
   }
   @override
-  Future<bool> supportsImageStream(int cameraId) async {
-    return true;
-  }
+  bool supportsImageStreaming() => true;
 
   /// The stream to receive frames from the native code.
   StreamSubscription<dynamic>? _platformImageStreamSubscription;
